@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Wealth OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #18181f;
+    --border: rgba(255,255,255,0.07);
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --gold-dim: rgba(201,168,76,0.15);
+    --invest: #4caf8c;
+    --invest-dim: rgba(76,175,140,0.15);
+    --self: #6b8de8;
+    --self-dim: rgba(107,141,232,0.15);
+    --tithe: #e86b6b;
+    --tithe-dim: rgba(232,107,107,0.15);
+    --text: #f0ede8;
+    --muted: rgba(240,237,232,0.4);
+    --radius: 18px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    max-width: 430px;
+    margin: 0 auto;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  .header {
+    padding: 52px 24px 20px;
+    position: relative;
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 24px; right: 24px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    opacity: 0.3;
+  }
+  .header-label {
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .header-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 36px;
+    font-weight: 300;
+    letter-spacing: -0.01em;
+    line-height: 1;
+  }
+  .header-date {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
+  /* NAV TABS */
+  .nav {
+    display: flex;
+    gap: 6px;
+    padding: 16px 24px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav-tab {
+    flex-shrink: 0;
+    padding: 8px 16px;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .nav-tab.active {
+    background: var(--gold-dim);
+    border-color: var(--gold);
+    color: var(--gold-light);
+  }
+
+  /* PAGES */
+  .page { display: none; padding: 0 24px 100px; animation: fadeIn 0.3s ease; }
+  .page.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* SECTION LABEL */
+  .section-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin: 24px 0 12px;
+  }
+
+  /* TOTAL CARD */
+  .total-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .total-card::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 120px; height: 120px;
+    background: radial-gradient(circle, var(--gold-dim) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .total-label { font-size: 11px; color: var(--muted); letter-spacing: 0.1em; margin-bottom: 8px; }
+  .total-amount {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 48px;
+    font-weight: 300;
+    color: var(--gold-light);
+    line-height: 1;
+  }
+  .total-currency { font-size: 20px; vertical-align: super; margin-right: 2px; }
+
+  /* SPLIT BARS */
+  .split-bar-container { margin: 16px 0; }
+  .split-bar-track {
+    height: 8px;
+    background: var(--surface2);
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+    gap: 2px;
+  }
+  .split-seg {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+  }
+  .seg-invest { background: var(--invest); }
+  .seg-self { background: var(--self); }
+  .seg-tithe { background: var(--tithe); }
+
+  .split-legend { display: flex; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+  .legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+
+  /* ALLOCATION CARDS */
+  .alloc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .alloc-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .alloc-card::before {
+    content: '';
+    position: absolute;
+    bottom: -20px; right: -20px;
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    opacity: 0.3;
+  }
+  .alloc-card.invest::before { background: var(--invest); }
+  .alloc-card.self::before { background: var(--self); }
+  .alloc-card.tithe::before { background: var(--tithe); }
+  .alloc-card.full { grid-column: 1 / -1; }
+
+  .alloc-pct {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+  .alloc-card.invest .alloc-pct { color: var(--invest); }
+  .alloc-card.self .alloc-pct { color: var(--self); }
+  .alloc-card.tithe .alloc-pct { color: var(--tithe); }
+  .alloc-name { font-size: 10px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
+  .alloc-amount { font-size: 16px; color: var(--text); }
+
+  /* INPUT FORM */
+  .input-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .input-card label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .input-row { display: flex; gap: 10px; margin-bottom: 12px; }
+  .input-field {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 15px;
+    padding: 12px 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+  .input-field:focus { border-color: var(--gold); }
+  .input-field::placeholder { color: var(--muted); }
+  select.input-field { appearance: none; cursor: pointer; }
+
+  .btn {
+    width: 100%;
+    padding: 14px;
+    border-radius: 12px;
+    border: none;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--gold), #a8762a);
+    color: #0a0a0f;
+    font-weight: 500;
+  }
+  .btn-primary:active { transform: scale(0.98); opacity: 0.9; }
+  .btn-danger {
+    background: transparent;
+    border: 1px solid rgba(232,107,107,0.3);
+    color: var(--tithe);
+    font-size: 11px;
+    padding: 10px;
+    margin-top: 8px;
+  }
+
+  /* HISTORY LIST */
+  .history-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .history-item:active { border-color: var(--gold); }
+  .history-month { font-family: 'Cormorant Garamond', serif; font-size: 20px; }
+  .history-year { font-size: 11px; color: var(--muted); }
+  .history-amount { font-size: 16px; color: var(--gold-light); text-align: right; }
+  .history-sub { font-size: 10px; color: var(--muted); text-align: right; margin-top: 2px; }
+  .history-invest { font-size: 10px; color: var(--invest); margin-top: 2px; text-align: right; }
+
+  /* PORTFOLIO */
+  .portfolio-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .portfolio-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+  .portfolio-label { font-size: 11px; color: var(--muted); }
+  .portfolio-val { font-family: 'Cormorant Garamond', serif; font-size: 22px; }
+  .roi-positive { color: var(--invest); }
+  .roi-negative { color: var(--tithe); }
+
+  .input-portfolio {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-top: 12px;
+  }
+  .input-portfolio .input-field { flex: 1; font-size: 14px; }
+
+  .btn-small {
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: none;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    background: var(--gold-dim);
+    color: var(--gold-light);
+    border: 1px solid rgba(201,168,76,0.3);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+
+  /* CHART */
+  .chart-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .chart-title { font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 16px; }
+  .bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 120px; }
+  .bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+  .bar-col { display: flex; gap: 2px; align-items: flex-end; width: 100%; justify-content: center; }
+  .bar {
+    border-radius: 4px 4px 0 0;
+    min-height: 4px;
+    transition: height 0.5s cubic-bezier(0.4,0,0.2,1);
+    width: 10px;
+  }
+  .bar-label { font-size: 9px; color: var(--muted); text-align: center; margin-top: 4px; }
+  .bar-month { font-size: 8px; color: rgba(240,237,232,0.25); }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 2;
+  }
+  .empty-icon { font-size: 36px; margin-bottom: 12px; opacity: 0.4; }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--gold);
+    color: #0a0a0f;
+    font-size: 12px;
+    padding: 10px 20px;
+    border-radius: 100px;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 999;
+    font-weight: 500;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* BOTTOM NAV */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 430px;
+    background: rgba(10,10,15,0.95);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border);
+    display: flex;
+    padding: 12px 0 20px;
+  }
+  .bottom-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    padding: 4px 0;
+    transition: color 0.2s;
+  }
+  .bottom-btn.active { color: var(--gold); }
+  .bottom-btn svg { width: 22px; height: 22px; }
+
+  .month-detail-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    align-items: flex-end;
+  }
+  .month-detail-modal.open { display: flex; }
+  .modal-sheet {
+    background: var(--surface);
+    border-radius: 24px 24px 0 0;
+    padding: 24px 24px 48px;
+    width: 100%;
+    border-top: 1px solid var(--border);
+    animation: slideUp 0.3s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 20px; }
+  .modal-title { font-family: 'Cormorant Garamond', serif; font-size: 28px; margin-bottom: 20px; }
+  .modal-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .modal-row:last-of-type { border-bottom: none; }
+  .modal-close { width: 100%; padding: 14px; border-radius: 12px; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); font-family: 'DM Mono', monospace; font-size: 12px; cursor: pointer; margin-top: 16px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-label">Wealth OS</div>
+  <div class="header-title">My Finances</div>
+  <div class="header-date" id="currentDate"></div>
+</div>
+
+<div class="nav">
+  <button class="nav-tab active" onclick="switchPage('overview')">Overview</button>
+  <button class="nav-tab" onclick="switchPage('log')">Log Income</button>
+  <button class="nav-tab" onclick="switchPage('history')">History</button>
+  <button class="nav-tab" onclick="switchPage('portfolio')">Portfolio</button>
+</div>
+
+<!-- OVERVIEW PAGE -->
+<div class="page active" id="page-overview">
+  <div class="section-label">This Month</div>
+  <div class="total-card">
+    <div class="total-label">Total Income</div>
+    <div class="total-amount"><span class="total-currency">R</span><span id="ov-total">0.00</span></div>
+    <div class="split-bar-container">
+      <div class="split-bar-track">
+        <div class="split-seg seg-invest" id="bar-invest" style="width:70%"></div>
+        <div class="split-seg seg-self" id="bar-self" style="width:20%"></div>
+        <div class="split-seg seg-tithe" id="bar-tithe" style="width:10%"></div>
+      </div>
+      <div class="split-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--invest)"></div>70% Invest</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--self)"></div>20% Self</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--tithe)"></div>10% Tithe</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="alloc-grid">
+    <div class="alloc-card invest">
+      <div class="alloc-name">Investments</div>
+      <div class="alloc-pct">70%</div>
+      <div class="alloc-amount">R <span id="ov-invest">0.00</span></div>
+    </div>
+    <div class="alloc-card self">
+      <div class="alloc-name">Self & Fun</div>
+      <div class="alloc-pct">20%</div>
+      <div class="alloc-amount">R <span id="ov-self">0.00</span></div>
+    </div>
+    <div class="alloc-card tithe full">
+      <div class="alloc-name">Tithe</div>
+      <div class="alloc-pct">10%</div>
+      <div class="alloc-amount">R <span id="ov-tithe">0.00</span></div>
+    </div>
+  </div>
+
+  <div class="section-label">6-Month Trend</div>
+  <div class="chart-wrap">
+    <div class="chart-title">Income vs Allocations</div>
+    <div class="bar-chart" id="trend-chart">
+      <div class="empty-state" style="padding:20px;font-size:11px">Log income to see chart</div>
+    </div>
+  </div>
+</div>
+
+<!-- LOG INCOME PAGE -->
+<div class="page" id="page-log">
+  <div class="section-label">Record Income</div>
+  <div class="input-card">
+    <label>Month</label>
+    <div class="input-row">
+      <select class="input-field" id="log-month">
+        <option value="0">January</option><option value="1">February</option>
+        <option value="2">March</option><option value="3">April</option>
+        <option value="4">May</option><option value="5">June</option>
+        <option value="6">July</option><option value="7">August</option>
+        <option value="8">September</option><option value="9">October</option>
+        <option value="10">November</option><option value="11">December</option>
+      </select>
+      <select class="input-field" id="log-year" style="max-width:90px"></select>
+    </div>
+    <label>Salary / Income (R)</label>
+    <div class="input-row">
+      <input class="input-field" id="log-amount" type="number" placeholder="0.00" inputmode="decimal" step="0.01" min="0">
+    </div>
+    <label>Note (optional)</label>
+    <div class="input-row">
+      <input class="input-field" id="log-note" type="text" placeholder="e.g. Bonus month">
+    </div>
+
+    <div style="background:var(--surface2);border-radius:12px;padding:14px;margin-bottom:16px">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:10px;letter-spacing:0.1em;text-transform:uppercase">Preview Split</div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px solid var(--border)">
+        <span style="color:var(--invest)">70% Investments</span><span id="prev-invest">R 0.00</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px solid var(--border)">
+        <span style="color:var(--self)">20% Self & Fun</span><span id="prev-self">R 0.00</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;padding:6px 0">
+        <span style="color:var(--tithe)">10% Tithe</span><span id="prev-tithe">R 0.00</span>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="saveEntry()">Save Entry</button>
+  </div>
+</div>
+
+<!-- HISTORY PAGE -->
+<div class="page" id="page-history">
+  <div class="section-label">All Records</div>
+  <div id="history-list"></div>
+</div>
+
+<!-- PORTFOLIO PAGE -->
+<div class="page" id="page-portfolio">
+  <div class="section-label">Investment Portfolio</div>
+  <div class="portfolio-card">
+    <div class="portfolio-row">
+      <div class="portfolio-label">Total Invested (logged)</div>
+      <div class="portfolio-val" style="color:var(--invest)">R <span id="port-invested">0.00</span></div>
+    </div>
+    <div class="portfolio-row">
+      <div class="portfolio-label">Portfolio Value (current)</div>
+      <div class="portfolio-val">R <span id="port-value">0.00</span></div>
+    </div>
+    <div style="height:1px;background:var(--border);margin:8px 0 16px"></div>
+    <div class="portfolio-row">
+      <div class="portfolio-label">Return on Investment</div>
+      <div class="portfolio-val" id="port-roi">—</div>
+    </div>
+    <div class="portfolio-row">
+      <div class="portfolio-label">Profit / Loss</div>
+      <div class="portfolio-val" id="port-pl">—</div>
+    </div>
+  </div>
+
+  <div class="input-card">
+    <label>Update Portfolio Value (R)</label>
+    <div class="input-portfolio">
+      <input class="input-field" id="port-input" type="number" placeholder="Current portfolio value" inputmode="decimal">
+      <button class="btn-small" onclick="updatePortfolio()">Update</button>
+    </div>
+    <div style="font-size:10px;color:var(--muted);margin-top:10px;line-height:1.8">
+      Enter the current total value of your investment portfolio. This is compared against your total invested capital to calculate ROI.
+    </div>
+  </div>
+
+  <div class="section-label">Cumulative Investment</div>
+  <div class="chart-wrap">
+    <div class="chart-title">Investment Growth by Month</div>
+    <div class="bar-chart" id="invest-chart">
+      <div class="empty-state" style="padding:20px;font-size:11px">No data yet</div>
+    </div>
+  </div>
+</div>
+
+<!-- MONTH DETAIL MODAL -->
+<div class="month-detail-modal" id="modal" onclick="closeModal(event)">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-title"></div>
+    <div id="modal-body"></div>
+    <button class="modal-close" onclick="closeModal()">Close</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="bottom-nav">
+  <button class="bottom-btn active" id="nav-overview" onclick="switchPage('overview')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+    Overview
+  </button>
+  <button class="bottom-btn" id="nav-log" onclick="switchPage('log')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l2.5 2.5"/><path d="M12 6v2M12 16v2M6 12H4M20 12h-2"/></svg>
+    Log
+  </button>
+  <button class="bottom-btn" id="nav-history" onclick="switchPage('history')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/><path d="M9 12h6M9 16h4"/></svg>
+    History
+  </button>
+  <button class="bottom-btn" id="nav-portfolio" onclick="switchPage('portfolio')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 17l4-8 4 5 3-3 4 6"/><path d="M3 3v18h18"/></svg>
+    Portfolio
+  </button>
+</div>
+
+<script>
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// ---- STORAGE ----
+function getData() {
+  try { return JSON.parse(localStorage.getItem('wealthOS') || '{}'); } catch { return {}; }
+}
+function saveData(d) { localStorage.setItem('wealthOS', JSON.stringify(d)); }
+
+function getEntries() { return getData().entries || []; }
+function getPortfolioValue() { return getData().portfolioValue || 0; }
+
+// ---- INIT ----
+window.addEventListener('DOMContentLoaded', () => {
+  const now = new Date();
+  document.getElementById('currentDate').textContent = now.toLocaleDateString('en-ZA', {weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  
+  // populate year select
+  const yearSel = document.getElementById('log-year');
+  for (let y = now.getFullYear(); y >= now.getFullYear()-3; y--) {
+    const o = document.createElement('option');
+    o.value = y; o.textContent = y;
+    yearSel.appendChild(o);
+  }
+  document.getElementById('log-month').value = now.getMonth();
+
+  document.getElementById('log-amount').addEventListener('input', updatePreview);
+  document.getElementById('port-input').value = getPortfolioValue() || '';
+
+  refreshAll();
+});
+
+function refreshAll() {
+  updateOverview();
+  updateHistory();
+  updatePortfolioPage();
+  renderTrendChart();
+  renderInvestChart();
+}
+
+// ---- FORMAT ----
+function fmt(n) { return Number(n).toLocaleString('en-ZA', {minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+// ---- OVERVIEW ----
+function updateOverview() {
+  const now = new Date();
+  const entries = getEntries();
+  const thisMonth = entries.find(e => e.month === now.getMonth() && e.year === now.getFullYear());
+  const total = thisMonth ? thisMonth.amount : 0;
+  document.getElementById('ov-total').textContent = fmt(total);
+  document.getElementById('ov-invest').textContent = fmt(total * 0.7);
+  document.getElementById('ov-self').textContent = fmt(total * 0.2);
+  document.getElementById('ov-tithe').textContent = fmt(total * 0.1);
+}
+
+// ---- PREVIEW ----
+function updatePreview() {
+  const v = parseFloat(document.getElementById('log-amount').value) || 0;
+  document.getElementById('prev-invest').textContent = 'R ' + fmt(v * 0.7);
+  document.getElementById('prev-self').textContent = 'R ' + fmt(v * 0.2);
+  document.getElementById('prev-tithe').textContent = 'R ' + fmt(v * 0.1);
+}
+
+// ---- SAVE ----
+function saveEntry() {
+  const amount = parseFloat(document.getElementById('log-amount').value);
+  if (!amount || amount <= 0) { showToast('Enter a valid amount'); return; }
+  const month = parseInt(document.getElementById('log-month').value);
+  const year = parseInt(document.getElementById('log-year').value);
+  const note = document.getElementById('log-note').value.trim();
+
+  // Load fresh from storage every time
+  let stored = {};
+  try { stored = JSON.parse(localStorage.getItem('wealthOS') || '{}'); } catch { stored = {}; }
+  if (!Array.isArray(stored.entries)) stored.entries = [];
+
+  // Find if entry for this exact month+year already exists
+  let found = false;
+  for (let i = 0; i < stored.entries.length; i++) {
+    if (Number(stored.entries[i].month) === month && Number(stored.entries[i].year) === year) {
+      stored.entries[i] = { month, year, amount, note, invest: amount*0.7, self: amount*0.2, tithe: amount*0.1 };
+      found = true;
+      break;
+    }
+  }
+  if (!found) {
+    stored.entries.push({ month, year, amount, note, invest: amount*0.7, self: amount*0.2, tithe: amount*0.1 });
+  }
+
+  // Sort newest first
+  stored.entries.sort((a, b) => (Number(b.year)*12 + Number(b.month)) - (Number(a.year)*12 + Number(a.month)));
+
+  // Save back
+  localStorage.setItem('wealthOS', JSON.stringify(stored));
+
+  document.getElementById('log-amount').value = '';
+  document.getElementById('log-note').value = '';
+  updatePreview();
+  refreshAll();
+  showToast('Entry saved ✓');
+  setTimeout(() => switchPage('overview'), 800);
+}
+
+// ---- HISTORY ----
+function updateHistory() {
+  const entries = getEntries();
+  const list = document.getElementById('history-list');
+  if (!entries.length) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div>No records yet.<br>Log your first income entry.</div>';
+    return;
+  }
+  list.innerHTML = entries.map((e,i) => `
+    <div class="history-item" onclick="openModal(${i})">
+      <div>
+        <div class="history-month">${MONTHS[e.month]}</div>
+        <div class="history-year">${e.year}${e.note ? ' · ' + e.note : ''}</div>
+      </div>
+      <div>
+        <div class="history-amount">R ${fmt(e.amount)}</div>
+        <div class="history-invest">↗ R ${fmt(e.invest)} invested</div>
+        <div class="history-sub">Self R ${fmt(e.self)} · Tithe R ${fmt(e.tithe)}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ---- MODAL ----
+function openModal(i) {
+  const e = getEntries()[i];
+  document.getElementById('modal-title').textContent = MONTHS[e.month] + ' ' + e.year;
+  document.getElementById('modal-body').innerHTML = `
+    <div class="modal-row"><span style="color:var(--muted)">Total Income</span><strong>R ${fmt(e.amount)}</strong></div>
+    <div class="modal-row"><span style="color:var(--invest)">70% Investments</span><span>R ${fmt(e.invest)}</span></div>
+    <div class="modal-row"><span style="color:var(--self)">20% Self & Fun</span><span>R ${fmt(e.self)}</span></div>
+    <div class="modal-row"><span style="color:var(--tithe)">10% Tithe</span><span>R ${fmt(e.tithe)}</span></div>
+    ${e.note ? `<div class="modal-row"><span style="color:var(--muted)">Note</span><span>${e.note}</span></div>` : ''}
+    <button class="btn btn-danger" onclick="deleteEntry(${i})">Delete Entry</button>
+  `;
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal(e) {
+  if (!e || e.target === document.getElementById('modal') || !e.target) {
+    document.getElementById('modal').classList.remove('open');
+  }
+}
+function deleteEntry(i) {
+  const data = getData();
+  data.entries.splice(i,1);
+  saveData(data);
+  closeModal();
+  refreshAll();
+  showToast('Entry deleted');
+}
+
+// ---- PORTFOLIO ----
+function updatePortfolio() {
+  const val = parseFloat(document.getElementById('port-input').value);
+  if (!val || val < 0) { showToast('Enter portfolio value'); return; }
+  const data = getData();
+  data.portfolioValue = val;
+  saveData(data);
+  updatePortfolioPage();
+  showToast('Portfolio updated ✓');
+}
+
+function updatePortfolioPage() {
+  const entries = getEntries();
+  const totalInvested = entries.reduce((s,e) => s + e.invest, 0);
+  const portVal = getPortfolioValue();
+  document.getElementById('port-invested').textContent = fmt(totalInvested);
+  document.getElementById('port-value').textContent = fmt(portVal);
+
+  if (portVal > 0 && totalInvested > 0) {
+    const pl = portVal - totalInvested;
+    const roi = ((pl / totalInvested) * 100).toFixed(2);
+    const roiEl = document.getElementById('port-roi');
+    const plEl = document.getElementById('port-pl');
+    roiEl.textContent = (pl >= 0 ? '+' : '') + roi + '%';
+    roiEl.className = 'portfolio-val ' + (pl >= 0 ? 'roi-positive' : 'roi-negative');
+    plEl.textContent = (pl >= 0 ? '+' : '') + 'R ' + fmt(Math.abs(pl));
+    plEl.className = 'portfolio-val ' + (pl >= 0 ? 'roi-positive' : 'roi-negative');
+  } else {
+    document.getElementById('port-roi').textContent = '—';
+    document.getElementById('port-pl').textContent = '—';
+    document.getElementById('port-roi').className = 'portfolio-val';
+    document.getElementById('port-pl').className = 'portfolio-val';
+  }
+}
+
+// ---- CHARTS ----
+function renderTrendChart() {
+  const entries = getEntries().slice().reverse().slice(-6);
+  const chart = document.getElementById('trend-chart');
+  if (!entries.length) { chart.innerHTML = '<div class="empty-state" style="padding:20px;font-size:11px">Log income to see chart</div>'; return; }
+
+  const maxVal = Math.max(...entries.map(e => e.amount));
+  chart.innerHTML = entries.map(e => {
+    const h = Math.max(4, (e.amount/maxVal)*100);
+    const hi = Math.max(2, (e.invest/maxVal)*100);
+    const hs = Math.max(2, (e.self/maxVal)*100);
+    const ht = Math.max(2, (e.tithe/maxVal)*100);
+    return `
+      <div class="bar-group">
+        <div class="bar-col">
+          <div class="bar seg-invest" style="height:${hi}px"></div>
+          <div class="bar seg-self" style="height:${hs}px"></div>
+          <div class="bar seg-tithe" style="height:${ht}px"></div>
+        </div>
+        <div class="bar-label">${SHORT[e.month]}</div>
+        <div class="bar-month">${e.year}</div>
+      </div>`;
+  }).join('');
+}
+
+function renderInvestChart() {
+  const entries = getEntries().slice().reverse().slice(-6);
+  const chart = document.getElementById('invest-chart');
+  if (!entries.length) { chart.innerHTML = '<div class="empty-state" style="padding:20px;font-size:11px">No data yet</div>'; return; }
+
+  let cumulative = 0;
+  const cumulativeData = entries.map(e => { cumulative += e.invest; return { ...e, cum: cumulative }; });
+  const maxVal = cumulativeData[cumulativeData.length-1].cum || 1;
+
+  chart.innerHTML = cumulativeData.map(e => {
+    const h = Math.max(4, (e.cum/maxVal)*100);
+    return `
+      <div class="bar-group">
+        <div class="bar-col">
+          <div class="bar seg-invest" style="height:${h}px;width:20px;border-radius:4px 4px 0 0;opacity:0.85"></div>
+        </div>
+        <div class="bar-label">${SHORT[e.month]}</div>
+        <div class="bar-month">${e.year}</div>
+      </div>`;
+  }).join('');
+}
+
+// ---- NAVIGATION ----
+function switchPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.bottom-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+  const tabs = document.querySelectorAll('.nav-tab');
+  const map = ['overview','log','history','portfolio'];
+  tabs[map.indexOf(name)]?.classList.add('active');
+}
+
+// ---- TOAST ----
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+</script>
+</body>
+</html>
